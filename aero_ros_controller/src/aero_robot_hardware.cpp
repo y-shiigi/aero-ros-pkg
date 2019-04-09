@@ -48,6 +48,11 @@ namespace aero_robot_hardware
 
 bool AeroRobotHW::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)// add joint list
 {
+  // action client
+  move_base_action_ = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>("/move_base", true);
+  move_base_status_sub_ = robot_hw_nh.subscribe("/move_base/status", 10, &AeroRobotHW::moveBaseStatusCallBack,this);
+  is_moving_ = false;
+
   std::string port_upper("/dev/aero_upper");
   std::string port_lower("/dev/aero_lower");
 
@@ -289,18 +294,41 @@ void AeroRobotHW::readPos(const ros::Time& time, const ros::Duration& period, bo
 
 void AeroRobotHW::read(const ros::Time& time, const ros::Duration& period)
 {
-  //
   mutex_upper_.lock();
-  bool collision_status = controller_upper_->get_status();
+  bool collision_status = controller_lower_->get_status();
   if (collision_status) {
     ROS_WARN("reset status");
-    controller_upper_->reset_status();
+    controller_lower_->reset_status();
+    if(is_moving_)move_base_action_->cancelAllGoals();
   }
   mutex_upper_.unlock();
   //
   //readPos(time, period, true);
 
   return;
+}
+
+void AeroRobotHW::moveBaseStatusCallBack(const actionlib_msgs::GoalStatusArray::ConstPtr &status)
+{
+  int status_id = 0;
+  //uint8 PENDING         = 0  
+  //uint8 ACTIVE          = 1 
+  //uint8 PREEMPTED       = 2
+  //uint8 SUCCEEDED       = 3
+  //uint8 ABORTED         = 4
+  //uint8 REJECTED        = 5
+  //uint8 PREEMPTING      = 6
+  //uint8 RECALLING       = 7
+  //uint8 RECALLED        = 8
+  //uint8 LOST            = 9
+
+  if (!status->status_list.empty()){
+    actionlib_msgs::GoalStatus goalStatus = status->status_list[0];
+    status_id = goalStatus.status;
+  }
+  else is_moving_ = false;
+
+  if(status_id == 1) is_moving_ = true; 
 }
 
 void AeroRobotHW::write(const ros::Time& time, const ros::Duration& period)

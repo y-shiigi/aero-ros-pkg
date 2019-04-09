@@ -68,6 +68,13 @@
 
 #include <mutex>
 
+// move_base
+#include <actionlib/client/simple_action_client.h>
+#include <move_base_msgs/MoveBaseAction.h>
+#include <move_base_msgs/MoveBaseFeedback.h>
+#include <move_base_msgs/MoveBaseResult.h>
+#include <actionlib_msgs/GoalStatusArray.h>
+
 using namespace aero;
 using namespace controller;
 using namespace common;
@@ -140,6 +147,8 @@ public:
   void startWheelServo();
   void stopWheelServo();
   void readVoltage(const ros::TimerEvent& _event);
+  //move_base
+  void moveBaseStatusCallBack(const actionlib_msgs::GoalStatusArray::ConstPtr &status);
 
   std::string getVersion() {
     mutex_upper_.lock();
@@ -225,6 +234,12 @@ protected:
 
   std::mutex mutex_lower_;
   std::mutex mutex_upper_;
+
+  // move_base
+  actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> *move_base_action_;
+  ros::Publisher move_base_cancel_pub_;
+  bool is_moving_;
+  ros::Subscriber move_base_status_sub_;
 };
 
 typedef boost::shared_ptr<AeroRobotHW> AeroRobotHWPtr;

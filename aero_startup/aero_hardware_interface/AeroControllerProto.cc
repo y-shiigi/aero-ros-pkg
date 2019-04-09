@@ -525,10 +525,21 @@ void AeroControllerProto::get_data(std::vector<int16_t>& _stroke_vector)
   }
 
   // if (cmd == CMD_MOVE_ABS || cmd == CMD_WATCH_MISSTEP || cmd == CMD_GET_POS) {
+/*
   if (cmd == CMD_WATCH_MISSTEP) {
     uint8_t status0 = dat[RAW_HEADER_OFFSET + 60];
     uint8_t status1 = dat[RAW_HEADER_OFFSET + 61];
     if ((status0 >> 5) == 1 || (status1 >> 5) == 1) {
+      bad_status_ = true;
+    } else {
+      bad_status_ = false;
+    }
+  }
+*/
+  if (cmd == CMD_MOVE_ABS_POS_RET) {
+    uint8_t status0 = dat[RAW_HEADER_OFFSET + 60];
+    uint8_t status1 = dat[RAW_HEADER_OFFSET + 61];
+    if ((status0 >> 6) == 1 || (status1 >> 6) == 1) {
       bad_status_ = true;
     } else {
       bad_status_ = false;
